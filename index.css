@@ -1,0 +1,68 @@
+body {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    width: 98vw;
+    background-color: blanchedalmond;
+    overflow-x: hidden;
+}
+
+.container-lg {
+    min-width: 95vw !important;
+    overflow: hidden;
+}
+
+#map {
+    width: 50vw;
+    height: 70vh;
+    background-color: black;
+}
+
+#layers,
+#polys {
+    width: 20vw;
+    /* max-width: 23vw; */
+    height: 70vh;
+    /* background-color: black; */
+}
+
+p {
+    margin: 0px;
+}
+
+.c-pointer {
+    cursor: pointer;
+}
+
+.form-select {
+    /* background-color: black;
+    color: white; */
+    border: none;
+    border-radius: 0px;
+    border-bottom: 1px solid #000;
+    /* width: auto; */
+}
+
+.poly:hover {
+    background-color: black;
+    color: white;
+}
+
+.selected-poly {
+    background-color: black;
+    color: white;
+}
+
+#container {
+    height: 60vh;
+    width: 90vw;
+    margin-top: 10px;
+}
+
+.loader-class {
+    width: 100%;
+    min-height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}

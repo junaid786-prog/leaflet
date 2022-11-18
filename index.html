@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.2/dist/leaflet.css"
+        integrity="sha256-sA+zWATbFveLLNqWO2gtiw3HL/lh1giY/Inf1BJ0z14=" crossorigin="" />
+    <script src="https://cdn.anychart.com/releases/8.11.0/js/anychart-base.min.js"></script>
+</head>
+
+<body>
+    <!-- <h1 class="text-uppercase">leaflet</h1> -->
+    <div class="d-flex flex-row mt-2 container-lg justify-content-between main">
+        <div id="map" class="rounded-3"></div>
+        <div id="layers" class="p-2 bg-white text-black d-flex flex-column align-items-center rounded-3">
+            <p>Layers</p>
+            <select class="form-select mt-3 w-75 d-none" aria-label="Default select example">
+            </select>
+            <div class="d-none mt-2 display-date">
+                <p></p>
+            </div>
+            <div class="not-selected mt-5">
+                <p>Select One Polygon</p>
+            </div>
+            <div class="layers-section w-100 d-flex flex-column align-items-center mt-3">
+            </div>
+            <div class="loader-class">
+                <div class="spinner-border text-primary d-none" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+
+            <div class="d-none error-poly">
+                <p>Error Occured</p>
+            </div>
+        </div>
+        <div id="polys" class="p-2 bg-white text-black d-flex flex-column align-items-center rounded-3">
+            <p>
+                Polygons
+            </p>
+            <div class="polys-section w-100 d-flex flex-column align-items-center mt-3">
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-row mt-2 container-lg justify-content-center main w-100">
+        <div id="container" class="p-2 bg-white text-black d-flex flex-column align-items-center rounded-3">
+        </div>
+
+    </div>
+
+    <!-- scripts -->
+    <!-- <script>
+        var map = L.map("map", {
+            center: [51.505, -0.09],
+            zoom: 13,
+        })
+    </script> -->
+    <script src="https://unpkg.com/leaflet@1.9.2/dist/leaflet.js"
+        integrity="sha256-o9N1jGDZrf5tS+Ft4gbIK7mYMipq9lqpVJ91xHSyKhg=" crossorigin=""></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.min.js"
+        integrity="sha384-nvAa0+6Qg9clwYCGGPpDQLVpLNn0fRaROjHqs13t4Ggj3Ez50XnGQqc/r8MhnRDZ"
+        crossorigin="anonymous"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="/polygons.js"></script>
+    <script src="/index.js"></script>
+</body>
+
+</html>
