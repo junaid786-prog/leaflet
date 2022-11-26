@@ -1,13 +1,21 @@
 // ====================== MAP =========================
 var map = L.map("map").setView([51.505, -0.09], 13)
-
-L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-  attribution: "",
+L.tileLayer("http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
+  maxZoom: 20,
+  subdomains: ["mt0", "mt1", "mt2", "mt3"],
 }).addTo(map)
+// L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+//   attribution: "",
+// }).addTo(map)
 
 let selectedPolygon
+// removeclasses
+// appendlayers
+// changelayer
+// display data
+// chart
 
-function changeLayersData(id) {
+function changeLayersData(index) {
   $(".form-select").removeClass("d-none")
   // $(".spinner-border").removeClass("d-none")
   $(".not-selected").addClass("d-none")
@@ -26,7 +34,7 @@ function changeLayersData(id) {
     $(".layers-section").addClass("d-none")
     $(".display-date").addClass("d-none")
     let a = $(this).children("option:selected").val()
-    let api = `http://api.agromonitoring.com/agro/1.0/image/search?start=1625512634&end=1668712634&polyid=6367f7e15c2911000750eee0&appid=7db9c06d307607716194a3b47844e5c3`
+    let api = `http://api.agromonitoring.com/agro/1.0/image/search?start=162551143&end=1668712634&polyid=${polyIds[index]}&appid=7db9c06d307607716194a3b47844e5c3`
     $.get(api, function (data) {})
       .done(function (d) {
         let link
@@ -49,11 +57,10 @@ function changeLayersData(id) {
         }
         $.get(link, function (dd) {})
           .done(function (ddd) {
-            console.log(ddd)
             $(".display-date").removeClass("d-none")
             $(".spinner-border").addClass("d-none")
             $(".layers-section").removeClass("d-none")
-            $(".display-date p").text(returnDate())
+            $(".display-date p").text(returnDate(d[0].dt))
             const requiredFields = [
               "max",
               "mean",
@@ -63,6 +70,8 @@ function changeLayersData(id) {
               "deviation",
               "num",
             ]
+            drawOnChart()
+            displayList(d)
             $(".layers-section").html("")
             for (let i in ddd) {
               if (requiredFields.includes(i)) {
@@ -72,28 +81,22 @@ function changeLayersData(id) {
             }
           })
           .fail(function () {
-            console.log("failed due to: " + link + 2)
+            console.log("failed due to: ")
           })
       })
       .fail(function (e) {
         $(".layers-section").addClass("d-none")
         $(".spinner-border").addClass("d-none")
         $(".error-poly").removeClass("d-none")
-        console.log(e)
       })
   })
 }
 
-function changeChart(id) {
-  console.log(id)
-}
 function showOnMap(elem) {
-  console.log(returnDate())
   let id = elem.id
   selectedPolygon = id // make it selected
-  console.log(polyIds.indexOf(id))
-  changeLayersData(id)
-  changeChart(id)
+  let pos = polyIds.indexOf(id)
+  changeLayersData(pos)
   // remove selected poly class
   for (let i = 0; i < polyIds.length; i++) {
     $(`#${polyIds[i]}`).removeClass("selected-poly")
@@ -102,22 +105,14 @@ function showOnMap(elem) {
   const api = `http://api.agromonitoring.com/agro/1.0/polygons/${id}?appid=${apiKey}`
   $.get(api, function (data) {}).done(function (d) {
     map.polygon && map.polygon.remove()
-    console.log(map.polygon)
-
-    let coordinates = d.geo_json.geometry.coordinates[0]
-    let polygon = L.polygon(data[polyIds.indexOf(id)], {
-      color: "#000000",
-      opacity: 0.6,
-      fillColor: "#3319b3",
-      fillOpacity: 1,
-    }).addTo(map)
-    // zoom the map to the polygon
-    map.fitBounds(polygon.getBounds())
+    let coordinates = d.geo_json
+    let p = L.geoJSON(coordinates).addTo(map)
+    map.fitBounds(p.getBounds())
   })
 }
-
 // ===================== CONSTANTS =========================
 
+const key = `7db9c06d307607716194a3b47844e5c3`
 const apiKey = `7db9c06d307607716194a3b47844e5c3`
 
 // ===================== POLYGONS ===========================
@@ -133,54 +128,87 @@ function returnPoly(name, area, id) {
 $(document).ready(function () {
   // display list of polygons
   for (let i = 0; i < polyIds.length; i++) {
-    const api = `http://api.agromonitoring.com/agro/1.0/polygons/${polyIds[i]}?appid=${apiKey}`
+    const api = `http://api.agromonitoring.com/agro/1.0/polygons/${polyIds[i]}?appid=${key}`
     $.get(api, function (data) {}).done(function (d) {
-      let coordinates = d.geo_json.geometry.coordinates[0]
       let p = returnPoly(d.name, d.area, polyIds[i])
       $(".polys-section").append(p)
     })
   }
+  // date filteration
+  var fromDate = document.querySelector("#from_date")
+  var toDate = document.querySelector("#to_date")
+
+  var to = new Date()
+  var from = new Date(Date.now() - 2.628e9)
+
+  fromDate.value = from.toISOString().substring(0, 10)
+  toDate.value = to.toISOString().substring(0, 10)
 })
 
 // charts system
+function drawOnChart() {
+  let minData = []
+  let maxData = []
+  let meanData = []
+  let i = `http://api.agromonitoring.com/agro/1.0/ndvi/history?start=1633201200&end=1669369394&polyid=${selectedPolygon}&appid=${key}`
+  $.get(i, function (data) {}).done(function (d) {
+    for (let j = 0; j < 10; j++) {
+      let dd = d[j].data
+      minData.push(dd.min)
+      maxData.push(dd.max)
+      meanData.push(dd.mean)
+    }
+    draw(minData, maxData, meanData)
+  })
+  $(".no_data p").css("display", "none")
+  $("#myChart").removeClass("d_none")
+}
 
-anychart.onDocumentReady(function () {
-  // add data
-  var data = [
-    ["2003", 0.431, -0.008, 0.195],
-    ["2004", 0.464, -0.014, 0.218],
-    ["2005", 0.223, -0.01, 0.418],
-  ]
+function draw(minData, maxData, meanData) {
+  const ctx = document.getElementById("myChart")
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [
+        "12-Nov-2022",
+        "14-Nov-2022",
+        "16-Nov-2022",
+        "18-Nov-2022",
+        "20-Nov-2022",
+        "28-Nov-2022",
+      ],
+      datasets: [
+        {
+          label: "Max",
+          data: maxData,
+          borderWidth: 1,
+        },
+        {
+          label: "Min",
+          data: minData,
+          borderWidth: 1,
+        },
+        {
+          label: "Mean",
+          data: meanData,
+          borderWidth: 1,
+        },
+      ],
+    },
+  })
+}
 
-  // create a data set
-  var dataSet = anychart.data.set(data)
-
-  // map the data for all series
-  var firstSeriesData = dataSet.mapAs({ x: 0, value: 1 })
-  var secondSeriesData = dataSet.mapAs({ x: 0, value: 2 })
-  var thirdSeriesData = dataSet.mapAs({ x: 0, value: 3 })
-
-  // create a line chart
-  var chart = anychart.line()
-
-  // create the series and name them
-  var firstSeries = chart.line(firstSeriesData)
-  firstSeries.name("Max")
-  var secondSeries = chart.line(secondSeriesData)
-  secondSeries.name("Min")
-  var thirdSeries = chart.line(thirdSeriesData)
-  thirdSeries.name("Mean")
-
-  // add a legend
-  chart.legend().enabled(true)
-
-  // add a title
-  chart.title("NDVI")
-
-  // specify where to display the chart
-  chart.container("container")
-  chart.tooltip().positionMode("point")
-  chart.tooltip().position("right").anchor("left-center").offsetX(5).offsetY(5)
-  // draw the resulting chart
-  chart.draw()
-})
+function returnBox(id, detail) {
+  const d = returnDate(id)
+  const poly = `<div class="map_box" onclick = layerC(this) id = ${id}>
+          <p>${d}</p>
+          <p>${detail.type}</p>
+        </div>`
+  return poly
+}
+function displayList(data) {
+  for (let i = 0; i < data.length; i++) {
+    let box = returnBox(data[i].dt, data[i])
+    $(`.map_bottom`).append(box)
+  }
+}

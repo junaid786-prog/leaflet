@@ -66,3 +66,45 @@ p {
     justify-content: center;
     align-items: center;
 }
+
+#myChart {
+    background-color: white;
+    max-height: 250px;
+}
+
+.d_none {
+    display: none;
+}
+
+.mb_3 {
+    margin-bottom: 20px;
+}
+
+.map_ {
+    position: relative;
+}
+
+.map_bottom {
+    position: absolute;
+    bottom: 0px;
+    opacity: 1;
+    z-index: 2000;
+    background-color: blanchedalmond;
+    overflow-x: scroll !important;
+    max-width: 100%;
+    display: flex;
+    padding: 5px;
+}
+
+.map_box {
+    padding: 20px 10px;
+    background-color: white;
+    cursor: pointer;
+    margin: 0px 5px;
+    border-radius: 5px;
+    min-width: 8vw !important;
+}
+
+.map_box p {
+    font-size: 12px;
+}
