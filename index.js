@@ -9,13 +9,14 @@ L.tileLayer("http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}", {
 // }).addTo(map)
 
 let selectedPolygon
+let ind
 // removeclasses
 // appendlayers
 // changelayer
 // display data
 // chart
 
-function changeLayersData(index) {
+function changeLayersData(index, idOf) {
   $(".form-select").removeClass("d-none")
   // $(".spinner-border").removeClass("d-none")
   $(".not-selected").addClass("d-none")
@@ -34,25 +35,29 @@ function changeLayersData(index) {
     $(".layers-section").addClass("d-none")
     $(".display-date").addClass("d-none")
     let a = $(this).children("option:selected").val()
-    let api = `http://api.agromonitoring.com/agro/1.0/image/search?start=162551143&end=1668712634&polyid=${polyIds[index]}&appid=7db9c06d307607716194a3b47844e5c3`
+    let api = `http://api.agromonitoring.com/agro/1.0/image/search?start=${Math.trunc(
+      startTime() - 2 * SECONDS_IN_MONTH
+    )}&end=${Math.trunc(startTime())}&polyid=${
+      polyIds[index]
+    }&appid=7db9c06d307607716194a3b47844e5c3`
     $.get(api, function (data) {})
       .done(function (d) {
         let link
         switch (a) {
           case "NDVI":
-            link = d[0].stats.ndvi
+            link = d[idOf ? idOf : d.length - 1].stats.ndvi
             break
           case "EVI":
-            link = d[0].stats.evi
+            link = d[idOf ? idOf : d.length - 1].stats.evi
             break
           case "EVI2":
-            link = d[0].stats.evi2
+            link = d[idOf ? idOf : d.length - 1].stats.evi2
             break
           case "NRI":
-            link = d[0].stats.nri
+            link = d[idOf ? idOf : d.length - 1].stats.nri
             break
           default:
-            link = d[0].stats.dswi
+            link = d[idOf ? idOf : d.length - 1].stats.dswi
             break
         }
         $.get(link, function (dd) {})
@@ -60,7 +65,9 @@ function changeLayersData(index) {
             $(".display-date").removeClass("d-none")
             $(".spinner-border").addClass("d-none")
             $(".layers-section").removeClass("d-none")
-            $(".display-date p").text(returnDate(d[0].dt))
+            $(".display-date p").text(
+              returnDate(d[idOf ? idOf : d.length - 1].dt)
+            )
             const requiredFields = [
               "max",
               "mean",
@@ -96,6 +103,8 @@ function showOnMap(elem) {
   let id = elem.id
   selectedPolygon = id // make it selected
   let pos = polyIds.indexOf(id)
+  ind = pos
+
   changeLayersData(pos)
   // remove selected poly class
   for (let i = 0; i < polyIds.length; i++) {
@@ -134,49 +143,71 @@ $(document).ready(function () {
       $(".polys-section").append(p)
     })
   }
-  // date filteration
-  var fromDate = document.querySelector("#from_date")
-  var toDate = document.querySelector("#to_date")
 
-  var to = new Date()
-  var from = new Date(Date.now() - 2.628e9)
+  // filter date
 
-  fromDate.value = from.toISOString().substring(0, 10)
-  toDate.value = to.toISOString().substring(0, 10)
+  $("#from_date").val(
+    new Date(Date.now() - SECONDS_IN_MONTH * 1000).toISOString().split("T")[0]
+  )
+  $("#to_date").val(new Date().toISOString().split("T")[0])
+  let fromDate, toDate
+  $("#from_date").change(function () {
+    let date = $(this).val()
+    fromDate = date
+    filterDate(toDate, fromDate)
+  })
+
+  $("#to_date").change(function () {
+    let date = $(this).val()
+    toDate = date
+    filterDate(toDate, fromDate)
+  })
 })
 
 // charts system
-function drawOnChart() {
+function drawOnChart(from, to) {
+  // date filteration
   let minData = []
   let maxData = []
   let meanData = []
-  let i = `http://api.agromonitoring.com/agro/1.0/ndvi/history?start=1633201200&end=1669369394&polyid=${selectedPolygon}&appid=${key}`
+  let labels = []
+  if (!from) from = new Date().getTime() / 1000 - 3 * SECONDS_IN_MONTH
+  if (!to) to = new Date().getTime() / 1000
+  let i = `http://api.agromonitoring.com/agro/1.0/ndvi/history?start=${Math.trunc(
+    from
+  )}&end=${Math.trunc(to)}&polyid=${selectedPolygon}&appid=${key}`
   $.get(i, function (data) {}).done(function (d) {
     for (let j = 0; j < 10; j++) {
       let dd = d[j].data
       minData.push(dd.min)
       maxData.push(dd.max)
       meanData.push(dd.mean)
+      labels.push(returnDate(d[j].dt))
     }
-    draw(minData, maxData, meanData)
+    draw(minData, maxData, meanData, labels)
   })
+}
+function filterDate(toDate, fromDate) {
+  let to = new Date(toDate)
+  let from = new Date(fromDate)
+  if (to.getTime() * 1000 - from.getTime() * 1000 < SECONDS_IN_MONTH) {
+    console.log("ok....")
+  } else {
+    drawOnChart(from.getTime() / 1000, to.getTime() / 1000)
+  }
+}
+function draw(minData, maxData, meanData, labels) {
   $(".no_data p").css("display", "none")
   $("#myChart").removeClass("d_none")
-}
-
-function draw(minData, maxData, meanData) {
+  let chartStatus = Chart.getChart("myChart") // <canvas> id
+  if (chartStatus != undefined) {
+    chartStatus.destroy()
+  }
   const ctx = document.getElementById("myChart")
-  new Chart(ctx, {
+  let myChart = new Chart(ctx, {
     type: "line",
     data: {
-      labels: [
-        "12-Nov-2022",
-        "14-Nov-2022",
-        "16-Nov-2022",
-        "18-Nov-2022",
-        "20-Nov-2022",
-        "28-Nov-2022",
-      ],
+      labels: labels,
       datasets: [
         {
           label: "Max",
@@ -198,17 +229,22 @@ function draw(minData, maxData, meanData) {
   })
 }
 
-function returnBox(id, detail) {
-  const d = returnDate(id)
-  const poly = `<div class="map_box" onclick = layerC(this) id = ${id}>
+function returnBox(data, detail) {
+  const d = returnDate(data.dt)
+  const poly = `<div class="map_box" onclick = clickBox(this) id = ${detail}>
           <p>${d}</p>
-          <p>${detail.type}</p>
+          <p>${data.type}</p>
         </div>`
   return poly
 }
 function displayList(data) {
   for (let i = 0; i < data.length; i++) {
-    let box = returnBox(data[i].dt, data[i])
+    let box = returnBox(data[i], i)
     $(`.map_bottom`).append(box)
   }
+}
+
+function clickBox(elem) {
+  //console.log(87)
+  //changeLayersData(ind, elem.id)
 }
